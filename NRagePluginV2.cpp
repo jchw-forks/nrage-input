@@ -174,13 +174,14 @@ EXPORT void CALL DllAbout ( HWND hParent )
 	LoadString( g_hResourceDLL, IDS_DLG_ABOUT_TITLE, tszTitle, DEFAULT_BUFFER );
 
 	TCHAR szText[DEFAULT_BUFFER * 4] = _T(STRING_PLUGINNAME) _T("\n\n") \
-		_T("Visit my site for support:  >>http://go.to/nrage<<\n\n") \
+		_T("Forked at: >>https://github.com/libertyernie/nrage-input<<\n\n") \
 		_T("Version ") VERSIONINFO _T(" (") _T(__DATE__) _T(")\n") \
-		_T("Done by N-Rage\n") \
+		_T("Original by N-Rage\n") \
 		_T("\n") \
 		_T(" - - - - -\n") \
 		_T("Transferpak emulation done by MadManMarkAu\n") \
-		_T("Cleanup, tweaks, and language support by RabidDeity\n");
+		_T("Cleanup, tweaks, and language support by RabidDeity\n") \
+		_T("Goomba / Goomba Color SRAM support by libertyernie (GPLv2+)\n");
 
 	LoadString( g_hResourceDLL, IDS_DLG_ABOUT, tszTranslator, DEFAULT_BUFFER );
 

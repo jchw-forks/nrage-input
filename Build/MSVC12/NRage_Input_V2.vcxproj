@@ -69,6 +69,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
@@ -126,6 +127,8 @@
     <ClCompile Include="..\..\DirectInput.cpp" />
     <ClCompile Include="..\..\FileAccess.cpp" />
     <ClCompile Include="..\..\GBCart.cpp" />
+    <ClCompile Include="..\..\goombasav\goombasav.c" />
+    <ClCompile Include="..\..\goombasav\minilzo-2.06\minilzo.c" />
     <ClCompile Include="..\..\Interface.cpp" />
     <ClCompile Include="..\..\International.cpp" />
     <ClCompile Include="..\..\NRagePluginV2.cpp" />
@@ -140,6 +143,10 @@
     <ClInclude Include="..\..\DirectInput.h" />
     <ClInclude Include="..\..\FileAccess.h" />
     <ClInclude Include="..\..\GBCart.h" />
+    <ClInclude Include="..\..\goombasav\goombasav.h" />
+    <ClInclude Include="..\..\goombasav\minilzo-2.06\lzoconf.h" />
+    <ClInclude Include="..\..\goombasav\minilzo-2.06\lzodefs.h" />
+    <ClInclude Include="..\..\goombasav\minilzo-2.06\minilzo.h" />
     <ClInclude Include="..\..\Interface.h" />
     <ClInclude Include="..\..\International.h" />
     <ClInclude Include="..\..\NRagePluginV2.h" />
