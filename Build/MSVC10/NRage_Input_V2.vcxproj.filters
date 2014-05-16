@@ -44,6 +44,12 @@
     <ClCompile Include="..\..\XInputController.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\goombasav\minilzo-2.06\minilzo.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goombasav\goombasav.c">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\commonIncludes.h">
@@ -86,6 +92,18 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\ControllerSpecs\Controller #1.1.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\goombasav\goombasav.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\goombasav\minilzo-2.06\lzoconf.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\goombasav\minilzo-2.06\lzodefs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\goombasav\minilzo-2.06\minilzo.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
