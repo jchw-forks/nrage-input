@@ -1,4 +1,4 @@
-NRage input plugin -- unofficial version 3.4
+NRage input plugin -- unofficial version 2.4
 ============================================
 
 This is libertyernie's UNOFFICIAL fork of the NRage input plugin, hosted at: https://github.com/libertyernie/nrage-input
