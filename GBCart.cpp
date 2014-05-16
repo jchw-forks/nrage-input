@@ -5,7 +5,7 @@
 ** This file's purpose is to emulate the inner workings of a
 ** GameBoy Game Pak cartrige.
 **
-** All code is by Mark McGough. MadManMarkAu@hotmail.com
+** Original code is by Mark McGough. MadManMarkAu@hotmail.com
 **
 **
 */
@@ -911,31 +911,34 @@ bool ReadCartMBC5(LPGBCART Cart, WORD dwAddress, BYTE *Data)
 // Done
 bool WriteCartMBC5(LPGBCART Cart, WORD dwAddress, BYTE *Data)
 {
-	switch (dwAddress >> 13)
+	switch (dwAddress >> 12)
 	{
 	case 0: //	if ((dwAddress <= 0x1FFF)) // We shouldn't be able to read/write to RAM unless this is toggled on
+	case 1:
 		Cart->bRamEnableState = (Data[0] == 0x0A);
 		DebugWriteA("Set RAM enable: %d\n", Cart->bRamEnableState);
 		break;
-	case 1: //	else if ((dwAddress >= 0x2000) && (dwAddress <= 0x2FFF)) // ROM bank select, low bits
+	case 2: //	else if ((dwAddress >= 0x2000) && (dwAddress <= 0x2FFF)) // ROM bank select, low bits
 		Cart->iCurrentRomBankNo &= 0xFF00;
 		Cart->iCurrentRomBankNo |= Data[0];
 		// Cart->iCurrentRomBankNo = ((int) Data[0]) | (Cart->iCurrentRomBankNo & 0x100);
 		DebugWriteA("Set ROM Bank: %02X\n", Cart->iCurrentRomBankNo);
 		break;
-	case 2: //	else if ((dwAddress >= 0x3000) && (dwAddress <= 0x3FFF)) // ROM bank select, high bit
+	case 3: //	else if ((dwAddress >= 0x3000) && (dwAddress <= 0x3FFF)) // ROM bank select, high bit
 		Cart->iCurrentRomBankNo &= 0x00FF;
 		Cart->iCurrentRomBankNo |= (Data[0] & 0x01) << 8;
 		// Cart->iCurrentRomBankNo = (Cart->iCurrentRomBankNo & 0xFF) | ((((int) Data[0]) & 1) * 0x100);
 		DebugWriteA("Set ROM Bank: %02X\n", Cart->iCurrentRomBankNo);
 		break;
-	case 3: //	if ((dwAddress >= 0x4000) && (dwAddress <= 0x5FFF)) // RAM bank select
+	case 4: //	if ((dwAddress >= 0x4000) && (dwAddress <= 0x5FFF)) // RAM bank select
+	case 5:
 		if (Cart->bHasRam) {
 			Cart->iCurrentRamBankNo = Data[0] & 0x0F;
 			DebugWriteA("Set RAM Bank: %02X\n", Cart->iCurrentRamBankNo);
 		}
 		break;
-	case 5: //	else if ((dwAddress >= 0xA000) && (dwAddress <= 0xBFFF)) // Write to RAM
+	case 10: //	else if ((dwAddress >= 0xA000) && (dwAddress <= 0xBFFF)) // Write to RAM
+	case 11:
 		if (Cart->bHasRam) {
 			if (Cart->iCurrentRamBankNo >= Cart->iNumRamBanks) {
 				DebugWriteA("RAM write: Buffer error on ");
