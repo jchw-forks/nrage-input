@@ -223,6 +223,7 @@ bool InitControllerPak( const int iControl )
 
 			tPak->gbCart.hRomFile = NULL;
 			tPak->gbCart.hRamFile = NULL;
+			tPak->gbCart.sGoombaRamPath = NULL;
 			tPak->gbCart.RomData = NULL;
 			tPak->gbCart.RamData = NULL;
 
@@ -689,7 +690,7 @@ void SaveControllerPak( const int iControl )
 			LPTRANSFERPAK tPak = (LPTRANSFERPAK)g_pcControllers[iControl].pPakData;
 			// here the changes( if any ) in the SRAM should be saved
 
-			if (tPak->gbCart.hRamFile != NULL)
+			if (tPak->gbCart.hRamFile != NULL || tPak->gbCart.sGoombaRamPath != NULL)
 			{
 				SaveCart(&tPak->gbCart, g_pcControllers[iControl].szTransferSave, _T(""));
 				DebugWriteA( "*** Save Transfer Pak ***\n" );

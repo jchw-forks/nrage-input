@@ -37,6 +37,9 @@ typedef struct _GBCART
 	bool TimerDataLatched;
 	HANDLE hRomFile;		// a file mapping handle
 	HANDLE hRamFile;		// a file mapping handle, must be NULL if malloc'd ram is being used instead of a valid memory mapped file
+	LPTSTR sGoombaRamPath;  // (TCHAR) path to the Goomba / Goomba Color file that the RAM was loaded from, must be NULL if Goomba is not being used
+	unsigned int iGoombaRamSize; // size of uncompressed GB/GBC RAM loaded from Goomba file
+	char GoombaHeaderTitle[16]; // (ASCII) title field of the Goomba header that should be replaced upon saving
 	LPCBYTE RomData;		// max [0x200 * 0x4000];
 	LPBYTE RamData;			// max [0x10 * 0x2000];
 	bool (*ptrfnReadCart)(_GBCART * Cart, WORD dwAddress, BYTE *Data);	// ReadCart handler

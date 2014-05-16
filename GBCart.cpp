@@ -12,6 +12,7 @@
 
 #include "commonIncludes.h"
 #include <windows.h>
+#include "goombasav/goombasav.h"
 #include "NRagePluginV2.h"
 #include "PakIO.h"
 #include "GBCart.h"
@@ -79,6 +80,115 @@ void UpdateRTC(LPGBCART Cart) {
 	DebugWriteA(":");
 	DebugWriteByteA(Cart->TimerData[4]);
 	DebugWriteA("\n");
+}
+
+/*
+Cart --> the LPGBCART structure to operate on. RamData must already be loaded - if Goomba is detected it will be reloaded from hTemp.
+hTemp --> An open file handle. File pointer will be reset to the beginning of the file when the function starts.
+NumQuarterBlocks --> Used to calculate the expected RAM size for this ROM.
+RamFileName --> If loading Goomba is successful, this string will be copied to Cart->hGoombaRamPath, unless it is NULL. Use NULL here if you want the save file to be read-only.
+*/
+void GoombaCheckAndLoad(LPGBCART Cart, HANDLE hTemp, DWORD NumQuarterBlocks, LPCTSTR RamFileName) {
+	if (((uint32_t*)Cart->RamData)[0] == GOOMBA_STATEID) {
+		UnmapViewOfFile(Cart->RamData);
+		CloseHandle(Cart->hRamFile);
+		Cart->hRamFile = NULL;
+		Cart->RamData = NULL;
+
+		char tmpbuffer[GOOMBA_COLOR_SRAM_SIZE];
+		DWORD b_read;
+		SetFilePointer(hTemp, 0, NULL, FILE_BEGIN);
+		ReadFile(hTemp, tmpbuffer, GOOMBA_COLOR_SRAM_SIZE, &b_read, NULL);
+
+		memcpy(Cart->GoombaHeaderTitle, &Cart->RomData[0x134], 0x0F);
+		Cart->GoombaHeaderTitle[0x0F] = '\0';
+
+		size_t size_needed = NumQuarterBlocks * 0x0800 + ((Cart->bHasTimer && Cart->bHasBattery) ? sizeof(gbCartRTC) : 0);
+		Cart->RamData = (LPBYTE)P_malloc(size_needed);
+
+		Cart->sGoombaRamPath = NULL;
+		stateheader* sh = stateheader_for(tmpbuffer, Cart->GoombaHeaderTitle);
+		if (sh == NULL) {
+			ClearData(Cart->RamData, size_needed);
+			WarningMessage(IDS_ERR_GBSRAMERR, MB_OK | MB_ICONWARNING);
+		} else {
+			goomba_size_t extracted_size;
+			void* gbc_data = goomba_extract(tmpbuffer, sh, &extracted_size);
+			if (gbc_data != NULL) {
+				Cart->sGoombaRamPath = RamFileName == NULL ? NULL : _tcsdup(RamFileName);
+				Cart->iGoombaRamSize = extracted_size;
+				if (extracted_size > size_needed) {
+					ClearData(Cart->RamData, size_needed);
+					WarningMessage(IDS_ERR_GBSRAMERR, MB_OK | MB_ICONWARNING);
+				} else {
+					memcpy(Cart->RamData, gbc_data, extracted_size);
+					// if we were going to fake the rtc data we would probably do it here
+				}
+			}
+		}
+	}
+}
+
+bool UpdateGoombaFile(LPGBCART Cart) {
+	HANDLE h = NULL;
+	LPVOID gba_data = NULL;
+	void* new_gba_data = NULL;
+
+	h = CreateFile(Cart->sGoombaRamPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	if (h == INVALID_HANDLE_VALUE) {
+		DebugWriteA("Invalid handle for %s\n", Cart->sGoombaRamPath);
+		goto dispose;
+	}
+	// Not sure the lock is needed - if transfer paks are closed sequentially we'll be okay
+	/*OVERLAPPED o1;
+	o1.Offset = 0;
+	o1.OffsetHigh = 0;
+	o1.hEvent = 0;
+	if (!LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK, 0, GOOMBA_COLOR_SRAM_SIZE, 0, &o1)) {
+		DebugWriteA("Lock error\n");
+		goto dispose;
+	}*/
+
+	gba_data = P_malloc(GOOMBA_COLOR_SRAM_SIZE);
+	DWORD b_read;
+	ReadFile(h, gba_data, GOOMBA_COLOR_SRAM_SIZE, &b_read, NULL);
+
+	stateheader* sh = stateheader_for(gba_data, Cart->GoombaHeaderTitle);
+	if (sh == NULL) {
+		DebugWriteA("[goombasav] %s\n", goomba_last_error());
+		goto dispose;
+	}
+
+	new_gba_data = goomba_new_sav(gba_data, sh, Cart->RamData, Cart->iGoombaRamSize);
+	P_free(gba_data);
+	gba_data = NULL;
+	if (new_gba_data == NULL) {
+		DebugWriteA("[goombasav] %s\n", goomba_last_error());
+		goto dispose;
+	}
+	if (SetFilePointer(h, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR) {
+		DebugWriteA("SetFilePointer error %d\n", GetLastError());
+		goto dispose;
+	}
+	if (!WriteFile(h, new_gba_data, GOOMBA_COLOR_SRAM_SIZE, &b_read, NULL)) {
+		DebugWriteA("File write error %d\n", GetLastError());
+		goto dispose;
+	}
+	DebugWriteA("Wrote Goomba save file\n");
+	free(new_gba_data);
+	//UnlockFileEx(h, 0, GOOMBA_COLOR_SRAM_SIZE, 0, &o1);
+	CloseHandle(h);
+	return true;
+dispose:
+	// This error is very rare - usually if the file cannot be saved to, the program will detect that it's read-only
+	MessageBoxA(NULL, "Unable to update the Goomba save file. Your progress will not be saved.", "Error", MB_OK | MB_ICONERROR);
+	if (new_gba_data != NULL) free(new_gba_data);
+	if (gba_data != NULL) P_free(gba_data);
+	if (h != NULL) {
+		//UnlockFileEx(h, 0, GOOMBA_COLOR_SRAM_SIZE, 0, &o1);
+		CloseHandle(h);
+	}
+	return false;
 }
 
 // returns true if the ROM was loaded OK
@@ -414,6 +524,7 @@ bool LoadCart(LPGBCART Cart, LPCTSTR RomFileName, LPCTSTR RamFileName, LPCTSTR T
 						ReadFile(hTemp, Cart->RamData, NumQuarterBlocks * 0x0800 + sizeof(gbCartRTC), &dwBytesRead, NULL);
 					else
 						ReadFile(hTemp, Cart->RamData, NumQuarterBlocks * 0x0800, &dwBytesRead, NULL);
+					GoombaCheckAndLoad(Cart, hTemp, NumQuarterBlocks, NULL);
 					WarningMessage( IDS_DLG_TPAK_READONLY, MB_OK | MB_ICONWARNING);
 				}
 				else
@@ -430,6 +541,7 @@ bool LoadCart(LPGBCART Cart, LPCTSTR RomFileName, LPCTSTR RamFileName, LPCTSTR T
 				if (Cart->hRamFile != NULL)
 				{
 					Cart->RamData = (LPBYTE)MapViewOfFile( Cart->hRamFile, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+					GoombaCheckAndLoad(Cart, hTemp, NumQuarterBlocks, RamFileName);
 				} else { // could happen, if the file isn't big enough AND can't be grown to fit
 					DWORD dwBytesRead;
 					if (Cart->bHasTimer && Cart->bHasBattery) {
@@ -446,13 +558,16 @@ bool LoadCart(LPGBCART Cart, LPCTSTR RomFileName, LPCTSTR RamFileName, LPCTSTR T
 					}
 					else
 					{
+						GoombaCheckAndLoad(Cart, hTemp, NumQuarterBlocks, NULL);
 						WarningMessage( IDS_DLG_TPAK_READONLY, MB_OK | MB_ICONWARNING);
 					}
 				}
 			}
 
 			if (Cart->bHasTimer && Cart->bHasBattery) {
-				dwFilesize = GetFileSize(hTemp, 0);
+				dwFilesize = Cart->sGoombaRamPath != NULL
+					? Cart->iGoombaRamSize
+					: GetFileSize(hTemp, 0);
 				if (dwFilesize >= (NumQuarterBlocks * 0x0800 + sizeof(gbCartRTC) ) ) {
 					// Looks like there is extra data in the SAV file than just RAM data... assume it is RTC data.
 					gbCartRTC RTCTimer;
@@ -962,7 +1077,9 @@ bool SaveCart(LPGBCART Cart, LPTSTR SaveFile, LPTSTR TimeFile)
 	DWORD NumQuarterBlocks = 0;
 	gbCartRTC RTCTimer;
 
-	if (Cart->bHasRam && Cart->bHasBattery) {
+	if (Cart->sGoombaRamPath != NULL) {
+		UpdateGoombaFile(Cart); // Save data is compressed - we have to write the whole file
+	} else if(Cart->bHasRam && Cart->bHasBattery) {
 		// Write only the bytes that NEED writing!
 		switch (Cart->RomData[0x149]) {
 		case 1:
@@ -1023,6 +1140,13 @@ bool UnloadCart(LPGBCART Cart)
 		CloseHandle(Cart->hRamFile);
 		Cart->hRamFile = NULL;
 	}
+	else if (Cart->sGoombaRamPath != NULL)
+		 {
+		free(Cart->sGoombaRamPath);
+		Cart->sGoombaRamPath = NULL;
+		P_free(Cart->RamData);
+		Cart->RamData = NULL;
+		}
 	else if (Cart->RamData != NULL)
 	{
 		P_free(Cart->RamData);
