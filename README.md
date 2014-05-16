@@ -1,14 +1,35 @@
-RELEASE Version 2.3c
+NRage input plugin -- unofficial version 3.4
+============================================
+
+This is libertyernie's UNOFFICIAL fork of the NRage input plugin, hosted at: https://github.com/libertyernie/nrage-input
+(originally from: https://nragev20.svn.sourceforge.net/svnroot/nragev20/trunk)
+
+Changes in this version:
+* Games with MBC5 RAM (including Pokemon Yellow) should now be written to correctly - reading was already working
+* Support added for using a save file from Goomba Color (GBC emulator for GBA) instead of a raw GBC save file. The GBC SRAM will be extracted on open and replaced on close.
+  * If you have one Goomba Color SRAM file with more than one GBC game's save data, you can use that same SRAM file for multiple games at once (e.g. Pokemon Blue on P1, Pokemon Gold on P2)
+
+The DLL provided here will NOT run on Windows XP, because the function XInputEnable is not available. If you know how XInput works and know of a workaround, let me know (or send a pull request).
+
+--------------------------------------------
 
 Disclaimer:
-	This software is distributed as is, without any guarantees of
-	merchantability or fitness for a particular purpose. Basically,
-	you can't sue us if you screw up your own computer.
-	This program is freeware released under the GPL. It's freely
-	distributable, as long as you follow the GPL. You are free to modify it,
-	but of course we ask that you tell us so we can incorporate bugfixes
-	in the next version.
-	Finally, don't try to earn money by distributing it.
+
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+--------------------------------------------
 
 What is it?
 	This plugin is for use with an N64 emulator that supports input plugins
@@ -29,10 +50,10 @@ Main Features
 		and will work with all emulators that support this spec
 
 Requirements:
-	A computer with Windows & DirectX9.0 or higher installed.
+	A computer with Windows (Vista or higher!) & DirectX9.0 or higher installed.
 	An emulator
 	Some games wouldn't hurt
-	You need the Microsoft Visual C++ 2010 SP1 Redistributable Package (x86)
+	You need the Microsoft Visual C++ 2013 SP1 Redistributable Package (x86)
 
 Installation:
 	Consult your emulator documentation as to where to place the DLL file
@@ -58,12 +79,9 @@ Known Issues:
 		a GB emulator to play the games)
 	No voice pak emulation (only one game supports it anyway)
 
-For the latest SOURCE CODE please check out trunk from the Subversion server:
-https://nragev20.svn.sourceforge.net/svnroot/nragev20/trunk
-(you can also find some useful information in the docs directory)
-For now, you'll need a copy of Visual Studio... but we're working on a Makefile.
+Original Changelog
+------------------
 
-#---------------------------------------------------------------------#
 History:
 
 + means fixed/added
